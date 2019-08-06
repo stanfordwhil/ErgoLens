@@ -12,13 +12,20 @@
 
 #include "Utilities.hpp"
 
+
+
 int g_Width = 640;
 int g_Height = 480;
 int g_RequestedFPS = 120;
-int g_MaxCams = 8;
+int g_MaxCams = 2; //changed for pair-wise calibration
+int camTryID;
+std::vector<int> cam_idx{0,2,4,6};
+int reference_cam;
+int other_cam;
 bool g_doCalibrate = false;
 bool g_isPause = false;
 std::string g_OutDir = ".";
+std::vector<int> cam_to_try;
 
 std::vector<std::shared_ptr<cv::VideoCapture>> g_ValidCams;
 std::mutex g_Mutex;
@@ -107,8 +114,9 @@ void WriteCalibFiles(void)
 
 void init()
 {
-	for (int camTryID = 0; camTryID < g_MaxCams; ++camTryID)
+	for (int i = 0; i < 2; ++i)	 
 	{
+		camTryID = cam_to_try[i];
 #ifdef _WIN32
 		std::shared_ptr<cv::VideoCapture> CamCap = std::make_shared<cv::VideoCapture>(CV_CAP_DSHOW + camTryID);
 #else
@@ -121,6 +129,7 @@ void init()
 		}
 		else
 			std::cout << "[ INFO ]: Successfully opened camera with device ID " << camTryID << "." << std::endl;
+
 
 		// Set properties
 		int PropSetSuccess = true;
@@ -293,6 +302,18 @@ int main(int argc, char *argv[])
 {
 	if (argc == 2)
 		g_OutDir = std::string(argv[1]);
+
+	if (argc == 3)
+		std::cout << argv[2] << std::endl;
+		reference_cam = std::stoi(argv[2]);
+		std::cout << reference_cam << std::endl;
+	
+	if (argc == 4)
+		other_cam = std::stoi(argv[3]);
+		std::cout << other_cam << std::endl;
+
+	cam_to_try.push_back(reference_cam);
+	cam_to_try.push_back(other_cam);
 
 	init();
 
