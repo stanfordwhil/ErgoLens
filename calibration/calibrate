@@ -2,10 +2,8 @@
 chmod u+x calibrate
 
 # variables
-SQUARE_SIZE=30.0
-NUM_INNER_CORNERS='8x5'
-
-# Format: ./ProjectKara/tools/KaraTools/builds/KaraCalibrator ~/Output_Folder cam_idx_1 cam_idx_2
+SQUARE_SIZE=37.0
+NUM_INNER_CORNERS='8x6'
 
 # air-earth
 ./ProjectKara/tools/KaraTools/builds/KaraCalibrator ./images/combined/air-earth 2 0
@@ -13,11 +11,11 @@ NUM_INNER_CORNERS='8x5'
 ../build/examples/calibration/calibration.bin --mode 2 --grid_square_size_mm SQUARE_SIZE --grid_number_inner_corners NUM_INNER_CORNERS --omit_distortion --calibratin_image_dir ./images/split/air-earth --cam0 2 --cam1 0
 
 # air-water
-./ProjectKara/tools/KaraTools/builds/KaraCalibrator ./images/combined/air-earth 2 4
+./ProjectKara/tools/KaraTools/builds/KaraCalibrator ./images/combined/air-water 2 4
 ./split.py --cam_idx_1 2 --cam_idx_2 4
 ../build/examples/calibration/calibration.bin --mode 2 --grid_square_size_mm SQUARE_SIZE --grid_number_inner_corners NUM_INNER_CORNERS --omit_distortion --calibratin_image_dir ./images/split/air-water --cam0 2 --cam1 4
 
 # air-fire
-./ProjectKara/tools/KaraTools/builds/KaraCalibrator ./images/combined/air-earth 2 6
+./ProjectKara/tools/KaraTools/builds/KaraCalibrator ./images/combined/air-fire 2 6
 ./split.py --cam_idx_1 2 --cam_idx_2 6
 ../build/examples/calibration/calibration.bin --mode 2 --grid_square_size_mm SQUARE_SIZE --grid_number_inner_corners NUM_INNER_CORNERS --omit_distortion --calibratin_image_dir ./images/split/air-fire --cam0 2 --cam1 6
