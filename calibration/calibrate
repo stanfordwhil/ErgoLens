@@ -1,3 +1,4 @@
+#Calibration script
 #!/bin/bash
 chmod u+x calibrate
 
