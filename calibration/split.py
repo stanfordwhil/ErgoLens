@@ -14,8 +14,8 @@ if __name__ == '__main__':
 
     cam1_name = camIdxToName[int(opt.cam1_idx)]
     cam2_name = camIdxToName[int(opt.cam2_idx)]
-    inputPath = './images/combined/' + cam1_name + '-' + cam2_name
-    savePath = './images/split/' + cam1_name + '-' + cam2_name
+    inputPath = './calibration/images/combined/' + cam1_name + '-' + cam2_name
+    savePath = './calibration/images/split/' + cam1_name + '-' + cam2_name
     if not os.path.exists(savePath):
         os.makedirs(savePath)
     images = [x for x in os.listdir(inputPath)]
@@ -26,8 +26,9 @@ if __name__ == '__main__':
         cropped1 = imgObj.crop((0, 0, int(width/2), height))
         cropped2 = imgObj.crop((int(width/2), 0, width, height))
 
-        name1 = str(i).zfill(12) + '_rendered'
-        name2 = str(i).zfill(12) + '_rendered_1'
+        name1 = str(i).zfill(12) + '_rendered.png'
+        name2 = str(i).zfill(12) + '_rendered_1.png'
         
         cropped1.save(savePath + '/' + name1, 'PNG')
         cropped2.save(savePath + '/' + name2, 'PNG')
+        print('Saving ' + name1 + ' and ' + name2 + '...')

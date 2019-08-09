@@ -1,0 +1,23 @@
+#Calibration script
+#!/bin/bash
+chmod u+x calibrate
+chmod u+x ./calibration/split.py
+
+# variables
+SQUARE_SIZE=37.0
+NUM_INNER_CORNERS='8x6'
+
+# air-earth
+./calibration/ProjectKara/tools/KaraTools/builds/linux/KaraCalibrator ./calibration/images/combined/air-earth 2 0
+python3 ./calibration/split.py --cam1_idx 2 --cam2_idx 0
+./build/examples/calibration/calibration.bin --mode 2 --grid_square_size_mm $SQUARE_SIZE --grid_number_inner_corners $NUM_INNER_CORNERS --omit_distortion --calibration_image_dir ./calibration/images/split/air-earth --cam0 0 --cam1 1
+
+# air-water
+./calibration//ProjectKara/tools/KaraTools/builds/linux/KaraCalibrator  ./calibration/images/combined/air-water 2 4
+python3 ./calibration/split.py --cam1_idx 2 --cam2_idx 4
+./build/examples/calibration/calibration.bin --mode 2 --grid_square_size_mm $SQUARE_SIZE --grid_number_inner_corners $NUM_INNER_CORNERS --omit_distortion --calibration_image_dir ./calibration/images/split/air-water --cam0 0 --cam1 1
+
+# air-fire
+./calibration//ProjectKara/tools/KaraTools/builds/linux/KaraCalibrator  ./calibration/images/combined/air-fire 2 6
+python3 ./calibration/split.py --cam1_idx 2 --cam2_idx 6
+./build/examples/calibration/calibration.bin --mode 2 --grid_square_size_mm $SQUARE_SIZE --grid_number_inner_corners $NUM_INNER_CORNERS --omit_distortion --calibration_image_dir ./calibration/images/split/air-fire --cam0 0 --cam1 1
