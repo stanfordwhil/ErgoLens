@@ -94,6 +94,122 @@ namespace op
             glPopMatrix();
         }
 
+        //we don't want to define this here..
+        // const std::map<unsigned int, std::string> BODY {
+        //     {"Nose", 0},             
+        //     {"Neck", 1},
+        //     {"RShoulder", 2},
+        //     {"RElbow", 3},
+        //     {"RWrist", 4},
+        //     {"LShoulder", 5},
+        //     {"LElbow", 6},
+        //     {"LWrist", 7},
+        //     {"MidHip", 8},
+        //     {"RHip", 9},
+        //     {"RKnee", 10},
+        //     {"RAnkle", 11},
+        //     {"LHip", 12},
+        //     {"LKnee", 13},
+        //     {"LAnkle", 14},
+        //     {"REye", 15},
+        //     {"LEye", 16},
+        //     {"REar", 17},
+        //     {"LEar", 18},
+        //     {"LBigToe", 19},
+        //     {"LSmallToe", 20},
+        //     {"LHeel", 21},
+        //     {"RBigToe", 22},
+        //     {"RSmallToe", 23},
+        //     {"RHeel", 24},
+        //     {"Background", 25},
+        //     };
+
+        const auto& poseBody = getPoseBodyPartMapping(PoseModel::BODY_25);
+
+        cv::Point3f coordinateGetter(const Array<float>& keypoints, int part) {
+            //const auto x = poseKeypoints3d[{person, part, 0}];
+            //const auto y = poseKeypoints3d[{person, part, 1}];
+            const auto baseIndex = 4 * part;
+
+            return cv::Point3f (keypoints[baseIndex], keypoints[baseIndex + 1], keypoints[baseIndex + 2]);
+            //return {keypoints[baseIndex], keypoints[baseIndex + 1], keypoints[baseIndex + 2]};
+        }
+
+        float calcVerticalAngles(const cv::Point3f& joint, const cv::Point3f& refjoint) {
+            cv::Point3f partVect = refjoint - joint;
+            // for (int i = 0; i < 3; i++) {
+            //     partVect[i] = refjoint[i] - joint[i];
+            // }
+
+            //figure out the axis, ref.x, ref.y, j.z BIG Q MARK
+            cv::Point3f v_ref_pt = {refjoint.x, refjoint.y, joint.z};
+            
+            cv::Point3f refVect = v_ref_pt - joint;
+            // for (int i = 0, i < 3, i++) {
+            //     refVect[i] = r_ref_pt[i] - joint[i];
+            // }
+
+            float ref_mag = sqrt(refVect.dot(refVect));
+            float pt_mag = sqrt(partVect.dot(partVect));
+            float part_dot_ref = partVect.dot(refVect);
+            float cos_theta = part_dot_ref/(ref_mag*pt_mag);
+
+            auto part_cross_ref = partVect.cross(refVect);
+            float part_cross_ref_mag = sqrt(part_cross_ref.dot(part_cross_ref));
+
+            float sin_theta = part_cross_ref_mag/(ref_mag*pt_mag);
+
+            auto theta = std::atan(sin_theta/cos_theta);
+            auto coef = 1 - (cos_theta / abs(cos_theta));
+            auto pii = 3.14159265;
+            theta = theta + coef * pii / 2;
+
+            return theta;
+
+            //vec2angle: compute cos theta from dot product, compute sin from cross product, get atan...
+            //auto cos_theta = std::inner_product(partVect, partVect+3, refVect, 0);
+            //int cross_P[] = crossProduct(partVect, refVect);
+            
+        }
+
+        void calculateAngles(const Array<float>& keypoints) 
+        {
+            const auto person = 0;
+            //const auto numberPeople = keypoints.getSize(0);
+            const auto numberBodyParts = keypoints.getSize(1);
+            // joint - ref_joint
+            // elbow - wrist
+            // hip - knee
+            // knee - ankle
+            // shoulder - elbow
+            // foot
+
+            //auto l_lower_arm = calcVerticalAngles(BODY['LElbow'], BODY['LWrist']); //6, 7
+            auto l_lower_arm = calcVerticalAngles(coordinateGetter(keypoints, 6), coordinateGetter(keypoints, 7));
+            //auto r_lower_arm = calcVerticalAngles(BODY['RElbow'], BODY['RWrist']); //3, 4
+            auto r_lower_arm = calcVerticalAngles(coordinateGetter(keypoints, 3), coordinateGetter(keypoints, 4));
+            
+            // r upper arm = Rshoulder and RElbow
+            auto r_upper_arm = calcVerticalAngles(coordinateGetter(keypoints, 2), coordinateGetter(keypoints, 3));
+            // l upper arm = LShoulder and LElbow
+            auto l_upper_arm = calcVerticalAngles(coordinateGetter(keypoints, 5), coordinateGetter(keypoints, 6));
+            
+            
+            //auto r_upper_leg = calcVerticalAngles(BODY['RHip'], BODY['RKnee']); //9, 10
+            auto r_upper_leg = calcVerticalAngles(coordinateGetter(keypoints, 9), coordinateGetter(keypoints, 10));
+            //l_hip and l_knee
+            auto l_upper_leg = calcVerticalAngles(coordinateGetter(keypoints, 12), coordinateGetter(keypoints, 13));
+            
+            //r knee and r ankle 
+            auto r_lower_leg = calcVerticalAngles(coordinateGetter(keypoints, 10), coordinateGetter(keypoints, 11));
+            // l knee and l ankle
+            auto l_lower_leg = calcVerticalAngles(coordinateGetter(keypoints, 13), coordinateGetter(keypoints, 14));
+
+        }
+
+
+
+
         void renderHumanBody(const Array<float>& keypoints, const std::vector<unsigned int>& pairs,
                              const std::vector<float> colors, const float ratio)
         {
@@ -260,6 +376,8 @@ namespace op
             glEnable(GL_LIGHTING);
         }
 
+
+
         void renderMain(void)
         {
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -287,6 +405,7 @@ namespace op
                 renderHumanBody(gKeypoints3D.faceKeypoints, FACE_PAIRS_RENDER, FACE_COLORS_RENDER, 0.5f);
                 renderHumanBody(gKeypoints3D.leftHandKeypoints, HAND_PAIRS_RENDER, HAND_COLORS_RENDER, 0.5f);
                 renderHumanBody(gKeypoints3D.rightHandKeypoints, HAND_PAIRS_RENDER, HAND_COLORS_RENDER, 0.5f);
+                calculateAngles(gKeypoints3D.poseKeypoints);
             }
             lock.unlock();
 
