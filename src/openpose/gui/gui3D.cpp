@@ -131,6 +131,8 @@ namespace op
             //const auto y = poseKeypoints3d[{person, part, 1}];
             const auto baseIndex = 4 * part;
 
+            //getting x,y,z of the keypoint for body_part of interest
+
             return cv::Point3f (keypoints[baseIndex], keypoints[baseIndex + 1], keypoints[baseIndex + 2]);
             //return {keypoints[baseIndex], keypoints[baseIndex + 1], keypoints[baseIndex + 2]};
         }
@@ -217,12 +219,12 @@ namespace op
             const auto numberPeople = keypoints.getSize(0);
             const auto numberBodyParts = keypoints.getSize(1);
             const auto numberColors = colors.size();
-            const auto xOffset = -3000.f; // 640.f;
-            const auto yOffset = 1000.f; // 360.f;
-            const auto zOffset = 1000.f; // 360.f;
-            const auto xScale = 5000.f; //before 43.f
-            const auto yScale = 2500.f; //before 24.f
-            const auto zScale = 2500.f; //before 24.f
+            const auto xOffset = -30000.f; // 640.f; //-3000
+            const auto yOffset = 2000000.f; // 360.f; //1000
+            const auto zOffset = 10000.f; // 360.f; //1000
+            const auto xScale = 50000.f; //before 43.f //5000
+            const auto yScale = 25000.f; //before 24.f //2500
+            const auto zScale = 25000.f; //before 24.f //2500
 
             if (numberPeople > person)
             //for(int person=0;person<numberPeople;++person)
@@ -396,8 +398,58 @@ namespace op
 
             glTranslatef(-gMouseXPan, gMouseYPan, -gMouseZPan);
 
-            // renderFloor(); // Disabled, how to know where the floor is?
+            renderFloor(); // Disabled, how to know where the floor is?
             std::unique_lock<std::mutex> lock{gKeypoints3D.mutex};
+
+             //***************************************** Editted by Golrokh ************************************************
+            glColor3f(1.0,0.0,0.0); // red x
+            glBegin(GL_LINES);
+            // x aix
+        
+            glVertex3f(-400.0, 0.0f, 0.0f);
+            glVertex3f(400.0, 0.0f, 0.0f);
+        
+            // arrow
+            glVertex3f(4.0, 0.0f, 0.0f);
+            glVertex3f(3.0, 1.0f, 0.0f);
+        
+            glVertex3f(4.0, 0.0f, 0.0f);
+            glVertex3f(3.0, -1.0f, 0.0f);
+            glEnd();
+            glFlush();
+        
+        
+        
+            // y 
+            glColor3f(0.0,1.0,0.0); // green y
+            glBegin(GL_LINES);
+            glVertex3f(0.0, -400.0f, 0.0f);
+            glVertex3f(0.0, 400.0f, 0.0f);
+        
+            // arrow
+            glVertex3f(0.0, 4.0f, 0.0f);
+            glVertex3f(1.0, 3.0f, 0.0f);
+        
+            glVertex3f(0.0, 4.0f, 0.0f);
+            glVertex3f(-1.0, 3.0f, 0.0f);
+            glEnd();
+            glFlush();
+        
+            // z 
+            glColor3f(0.0,0.0,1.0); // blue z
+            glBegin(GL_LINES);
+            glVertex3f(0.0, 0.0f ,-400.0f );
+            glVertex3f(0.0, 0.0f ,400.0f );
+        
+            // arrow
+            glVertex3f(0.0, 0.0f ,4.0f );
+            glVertex3f(0.0, 1.0f ,3.0f );
+        
+            glVertex3f(0.0, 0.0f ,4.0f );
+            glVertex3f(0.0, -1.0f ,3.0f );
+            glEnd();
+            glFlush(); 
+            //***************************************** finish editing ************************************************          
             if (gKeypoints3D.validKeypoints)
             {
                 renderHumanBody(gKeypoints3D.poseKeypoints, getPoseBodyPartPairsRender(sPoseModel),
