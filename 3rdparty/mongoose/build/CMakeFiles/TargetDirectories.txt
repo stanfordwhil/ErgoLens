@@ -1,0 +1,3 @@
+/home/whil/Desktop/WoodenMan/mongoose/build/CMakeFiles/rebuild_cache.dir
+/home/whil/Desktop/WoodenMan/mongoose/build/CMakeFiles/mongoose.dir
+/home/whil/Desktop/WoodenMan/mongoose/build/CMakeFiles/edit_cache.dir
