@@ -1,6 +1,7 @@
 ﻿#include <atomic>
 #include <mutex>
 #include <stdio.h>
+#include "CWebSocketServer.hpp"
 #ifdef USE_3D_RENDERER
     #include <GL/glut.h>
     #include <GL/freeglut_ext.h> // glutLeaveMainLoop
@@ -13,8 +14,12 @@
 #include <openpose/utilities/keypoint.hpp>
 #include <openpose/gui/gui3D.hpp>
 
+CWEBSOCKETS_STATIC_DEFINITIONS
+Common::CWebSocketServer m_WSTransceiver;
+
 namespace op
 {
+
     #ifdef USE_3D_RENDERER
         const bool LOG_VERBOSE_3D_RENDERER = false;
         const auto WINDOW_WIDTH = 1280;
@@ -143,8 +148,52 @@ namespace op
             //     partVect[i] = refjoint[i] - joint[i];
             // }
 
+            const auto xOffset = -30000.f; // 640.f; //-3000
+            const auto yOffset = 2000000.f; // 360.f; //1000
+            const auto zOffset = 10000.f; // 360.f; //1000
+            const auto xScale = 50000.f; //before 43.f //5000
+            const auto yScale = 25000.f; //before 24.f //2500
+            const auto zScale = 25000.f; //before 24.f //2500
+
+
+            
+
+            //move this elsewhere. perhaps to renderhuman body? 
+            //or even a different module
+
+            std::stringstream wss;
+            //m_WSTransceiver.SendData("hello world");
+            std::cout << "broadcasting ..." << std::endl;
+
+            auto pos3D = joint;
+            wss  << joint.x << "," << joint.y << "," << joint.z;
+            m_WSTransceiver.SendData(wss.str());
+            // //auto& Joints = m_skeleton->getJoints(); //getting the joints
+            // for (int ijk = 0; ijk < Joints.size(); ++ijk)
+            // {
+            //     auto Pos3D = Joints[ijk]->getGlobalPosition();
+            //     wss << Pos3D[0] << ", " << Pos3D[1] << ", " << Pos3D[2];
+            //     if (ijk != (Joints.size() - 1))
+            //         wss << ", ";
+            // }
+            // m_WSTransceiver.SendData(wss.str());
+
+
+
             //figure out the axis, ref.x, ref.y, j.z BIG Q MARK
             cv::Point3f v_ref_pt = {refjoint.x, refjoint.y, joint.z};
+            cv::Point3f v_ref_kpt{
+                -(v_ref_pt.x - xOffset) / xScale,
+                -(v_ref_pt.y - yOffset) / yScale,
+                (v_ref_pt.z - zOffset) / zScale
+            };
+            // Create and add new sphere
+            glPushMatrix();
+            glTranslatef(v_ref_kpt.x, v_ref_kpt.y, v_ref_kpt.z);
+            // Draw sphere
+            glutSolidSphere(0.5 * 1.f, 20, 20);
+            glPopMatrix();
+
             
             cv::Point3f refVect = v_ref_pt - joint;
             // for (int i = 0, i < 3, i++) {
@@ -162,7 +211,7 @@ namespace op
             float sin_theta = part_cross_ref_mag/(ref_mag*pt_mag);
 
             auto theta = std::atan(sin_theta/cos_theta);
-            auto coef = 1 - (cos_theta / abs(cos_theta));
+            auto coef = 1 - (cos_theta  / abs(cos_theta));
             auto pii = 3.14159265;
             theta = theta + coef * pii / 2;
 
@@ -187,25 +236,25 @@ namespace op
             // foot
 
             //auto l_lower_arm = calcVerticalAngles(BODY['LElbow'], BODY['LWrist']); //6, 7
-            auto l_lower_arm = calcVerticalAngles(coordinateGetter(keypoints, 6), coordinateGetter(keypoints, 7));
+            //auto l_lower_arm = calcVerticalAngles(coordinateGetter(keypoints, 6), coordinateGetter(keypoints, 7));
             //auto r_lower_arm = calcVerticalAngles(BODY['RElbow'], BODY['RWrist']); //3, 4
             auto r_lower_arm = calcVerticalAngles(coordinateGetter(keypoints, 3), coordinateGetter(keypoints, 4));
             
             // r upper arm = Rshoulder and RElbow
-            auto r_upper_arm = calcVerticalAngles(coordinateGetter(keypoints, 2), coordinateGetter(keypoints, 3));
+            //auto r_upper_arm = calcVerticalAngles(coordinateGetter(keypoints, 2), coordinateGetter(keypoints, 3));
             // l upper arm = LShoulder and LElbow
-            auto l_upper_arm = calcVerticalAngles(coordinateGetter(keypoints, 5), coordinateGetter(keypoints, 6));
+            //auto l_upper_arm = calcVerticalAngles(coordinateGetter(keypoints, 5), coordinateGetter(keypoints, 6));
             
             
             //auto r_upper_leg = calcVerticalAngles(BODY['RHip'], BODY['RKnee']); //9, 10
-            auto r_upper_leg = calcVerticalAngles(coordinateGetter(keypoints, 9), coordinateGetter(keypoints, 10));
+            //auto r_upper_leg = calcVerticalAngles(coordinateGetter(keypoints, 9), coordinateGetter(keypoints, 10));
             //l_hip and l_knee
-            auto l_upper_leg = calcVerticalAngles(coordinateGetter(keypoints, 12), coordinateGetter(keypoints, 13));
+            //auto l_upper_leg = calcVerticalAngles(coordinateGetter(keypoints, 12), coordinateGetter(keypoints, 13));
             
             //r knee and r ankle 
-            auto r_lower_leg = calcVerticalAngles(coordinateGetter(keypoints, 10), coordinateGetter(keypoints, 11));
+            //auto r_lower_leg = calcVerticalAngles(coordinateGetter(keypoints, 10), coordinateGetter(keypoints, 11));
             // l knee and l ankle
-            auto l_lower_leg = calcVerticalAngles(coordinateGetter(keypoints, 13), coordinateGetter(keypoints, 14));
+            //auto l_lower_leg = calcVerticalAngles(coordinateGetter(keypoints, 13), coordinateGetter(keypoints, 14));
 
         }
 
@@ -450,6 +499,8 @@ namespace op
             glEnd();
             glFlush(); 
             //***************************************** finish editing ************************************************          
+            m_WSTransceiver.Initialize();
+            m_WSTransceiver.StartServer();
             if (gKeypoints3D.validKeypoints)
             {
                 renderHumanBody(gKeypoints3D.poseKeypoints, getPoseBodyPartPairsRender(sPoseModel),
