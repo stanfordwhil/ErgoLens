@@ -228,6 +228,7 @@ namespace op
             const auto person = 0;
             //const auto numberPeople = keypoints.getSize(0);
             const auto numberBodyParts = keypoints.getSize(1);
+            std::cout << numberBodyParts << std::endl; 
             // joint - ref_joint
             // elbow - wrist
             // hip - knee
@@ -235,10 +236,33 @@ namespace op
             // shoulder - elbow
             // foot
 
+            std::stringstream wss;
+
+            for (int i = 0; i < numberBodyParts-1; i++) {
+                //if number of body_part
+                cv::Point3f joint = coordinateGetter(keypoints, i);
+                wss << joint.x << "," << joint.y << "," << joint.z << ",";
+            }
+            cv::Point3f jointlast = coordinateGetter(keypoints, numberBodyParts-1);
+            wss << jointlast.x << "," << jointlast.y << "," << jointlast.z;
+            
+            //wss  << joint.x << "," << joint.y << "," << joint.z;
+            m_WSTransceiver.SendData(wss.str());
+            std::cout << wss.str() << std::endl;
+            // //auto& Joints = m_skeleton->getJoints(); //getting the joints
+            // for (int ijk = 0; ijk < Joints.size(); ++ijk)
+            // {
+            //     auto Pos3D = Joints[ijk]->getGlobalPosition();
+            //     wss << Pos3D[0] << ", " << Pos3D[1] << ", " << Pos3D[2];
+            //     if (ijk != (Joints.size() - 1))
+            //         wss << ", ";
+            // }
+            // m_WSTransceiver.SendData(wss.str());
+
             //auto l_lower_arm = calcVerticalAngles(BODY['LElbow'], BODY['LWrist']); //6, 7
             //auto l_lower_arm = calcVerticalAngles(coordinateGetter(keypoints, 6), coordinateGetter(keypoints, 7));
             //auto r_lower_arm = calcVerticalAngles(BODY['RElbow'], BODY['RWrist']); //3, 4
-            auto r_lower_arm = calcVerticalAngles(coordinateGetter(keypoints, 3), coordinateGetter(keypoints, 4));
+            //auto r_lower_arm = calcVerticalAngles(coordinateGetter(keypoints, 3), coordinateGetter(keypoints, 4));
             
             // r upper arm = Rshoulder and RElbow
             //auto r_upper_arm = calcVerticalAngles(coordinateGetter(keypoints, 2), coordinateGetter(keypoints, 3));
