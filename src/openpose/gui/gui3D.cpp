@@ -144,9 +144,7 @@ namespace op
 
         float calcVerticalAngles(const cv::Point3f& joint, const cv::Point3f& refjoint) {
             cv::Point3f partVect = refjoint - joint;
-            // for (int i = 0; i < 3; i++) {
-            //     partVect[i] = refjoint[i] - joint[i];
-            // }
+
 
             const auto xOffset = -30000.f; // 640.f; //-3000
             const auto yOffset = 2000000.f; // 360.f; //1000
@@ -156,32 +154,8 @@ namespace op
             const auto zScale = 25000.f; //before 24.f //2500
 
 
-            
-
-            //move this elsewhere. perhaps to renderhuman body? 
-            //or even a different module
-
-            std::stringstream wss;
-            //m_WSTransceiver.SendData("hello world");
-            std::cout << "broadcasting ..." << std::endl;
-
-            auto pos3D = joint;
-            wss  << joint.x << "," << joint.y << "," << joint.z;
-            m_WSTransceiver.SendData(wss.str());
-            // //auto& Joints = m_skeleton->getJoints(); //getting the joints
-            // for (int ijk = 0; ijk < Joints.size(); ++ijk)
-            // {
-            //     auto Pos3D = Joints[ijk]->getGlobalPosition();
-            //     wss << Pos3D[0] << ", " << Pos3D[1] << ", " << Pos3D[2];
-            //     if (ijk != (Joints.size() - 1))
-            //         wss << ", ";
-            // }
-            // m_WSTransceiver.SendData(wss.str());
-
-
-
             //figure out the axis, ref.x, ref.y, j.z BIG Q MARK
-            cv::Point3f v_ref_pt = {refjoint.x, refjoint.y, joint.z};
+            cv::Point3f v_ref_pt = {joint.x, joint.y, refjoint.z};
             cv::Point3f v_ref_kpt{
                 -(v_ref_pt.x - xOffset) / xScale,
                 -(v_ref_pt.y - yOffset) / yScale,
@@ -204,18 +178,29 @@ namespace op
             float pt_mag = sqrt(partVect.dot(partVect));
             float part_dot_ref = partVect.dot(refVect);
             float cos_theta = part_dot_ref/(ref_mag*pt_mag);
+            //std::cout << "cos_theta :" << cos_theta << std::endl;
 
             auto part_cross_ref = partVect.cross(refVect);
             float part_cross_ref_mag = sqrt(part_cross_ref.dot(part_cross_ref));
 
+
             float sin_theta = part_cross_ref_mag/(ref_mag*pt_mag);
 
             auto theta = std::atan(sin_theta/cos_theta);
-            auto coef = 1 - (cos_theta  / abs(cos_theta));
-            auto pii = 3.14159265;
-            theta = theta + coef * pii / 2;
+            //std::cout << "cos_theta :" << cos_theta << std::endl;
+            //std::cout << "sin_theta :" << sin_theta << std::endl;
+            //std::cout << "theta :" << theta << std::endl;
 
-            return theta;
+            auto pii = 3.141592653589793238463;
+
+            auto degrees = theta * (180.0/pii); 
+            //std::cout << "degrees : " << degrees << std::endl;
+            //auto coef = 1 - (cos_theta  / abs(cos_theta));
+            //std::cout << coef << std::endl;
+            
+            //theta = theta + coef * pii / 2;
+
+            return degrees;
 
             //vec2angle: compute cos theta from dot product, compute sin from cross product, get atan...
             //auto cos_theta = std::inner_product(partVect, partVect+3, refVect, 0);
@@ -244,41 +229,46 @@ namespace op
                 wss << joint.x << "," << joint.y << "," << joint.z << ",";
             }
             cv::Point3f jointlast = coordinateGetter(keypoints, numberBodyParts-1);
-            wss << jointlast.x << "," << jointlast.y << "," << jointlast.z;
+            wss << jointlast.x << "," << jointlast.y << "," << jointlast.z << ";";
             
             //wss  << joint.x << "," << joint.y << "," << joint.z;
-            m_WSTransceiver.SendData(wss.str());
-            std::cout << wss.str() << std::endl;
-            // //auto& Joints = m_skeleton->getJoints(); //getting the joints
-            // for (int ijk = 0; ijk < Joints.size(); ++ijk)
-            // {
-            //     auto Pos3D = Joints[ijk]->getGlobalPosition();
-            //     wss << Pos3D[0] << ", " << Pos3D[1] << ", " << Pos3D[2];
-            //     if (ijk != (Joints.size() - 1))
-            //         wss << ", ";
-            // }
-            // m_WSTransceiver.SendData(wss.str());
+            //m_WSTransceiver.SendData(wss.str());
+
 
             //auto l_lower_arm = calcVerticalAngles(BODY['LElbow'], BODY['LWrist']); //6, 7
-            //auto l_lower_arm = calcVerticalAngles(coordinateGetter(keypoints, 6), coordinateGetter(keypoints, 7));
+            auto l_lower_arm = calcVerticalAngles(coordinateGetter(keypoints, 6), coordinateGetter(keypoints, 7));
+            std::cout << "angle l_lower_arm:" << l_lower_arm << std::endl;
+
             //auto r_lower_arm = calcVerticalAngles(BODY['RElbow'], BODY['RWrist']); //3, 4
-            //auto r_lower_arm = calcVerticalAngles(coordinateGetter(keypoints, 3), coordinateGetter(keypoints, 4));
+            auto r_lower_arm = calcVerticalAngles(coordinateGetter(keypoints, 3), coordinateGetter(keypoints, 4));
+            std::cout << "angle r_lower_arm:" << r_lower_arm << std::endl;
             
             // r upper arm = Rshoulder and RElbow
-            //auto r_upper_arm = calcVerticalAngles(coordinateGetter(keypoints, 2), coordinateGetter(keypoints, 3));
+            auto r_upper_arm = calcVerticalAngles(coordinateGetter(keypoints, 2), coordinateGetter(keypoints, 3));
+            std::cout << "angle r_upper_arm:" << r_upper_arm << std::endl;
+            
             // l upper arm = LShoulder and LElbow
-            //auto l_upper_arm = calcVerticalAngles(coordinateGetter(keypoints, 5), coordinateGetter(keypoints, 6));
+            auto l_upper_arm = calcVerticalAngles(coordinateGetter(keypoints, 5), coordinateGetter(keypoints, 6));
+            std::cout << "angle l_upper_arm:" << l_upper_arm << std::endl;
             
             
             //auto r_upper_leg = calcVerticalAngles(BODY['RHip'], BODY['RKnee']); //9, 10
-            //auto r_upper_leg = calcVerticalAngles(coordinateGetter(keypoints, 9), coordinateGetter(keypoints, 10));
+            auto r_upper_leg = calcVerticalAngles(coordinateGetter(keypoints, 9), coordinateGetter(keypoints, 10));
+            std::cout << "angle r_upper_leg:" << r_upper_leg << std::endl;
             //l_hip and l_knee
-            //auto l_upper_leg = calcVerticalAngles(coordinateGetter(keypoints, 12), coordinateGetter(keypoints, 13));
-            
+            auto l_upper_leg = calcVerticalAngles(coordinateGetter(keypoints, 12), coordinateGetter(keypoints, 13));
+            std::cout << "angle l_upper_leg:" << l_upper_leg << std::endl;
+
             //r knee and r ankle 
-            //auto r_lower_leg = calcVerticalAngles(coordinateGetter(keypoints, 10), coordinateGetter(keypoints, 11));
+            auto r_lower_leg = calcVerticalAngles(coordinateGetter(keypoints, 10), coordinateGetter(keypoints, 11));
+            std::cout << "angle r_lower_leg:" << r_lower_leg << std::endl;
+
             // l knee and l ankle
-            //auto l_lower_leg = calcVerticalAngles(coordinateGetter(keypoints, 13), coordinateGetter(keypoints, 14));
+            auto l_lower_leg = calcVerticalAngles(coordinateGetter(keypoints, 13), coordinateGetter(keypoints, 14));
+            std::cout << "angle l_lower_leg:" << l_lower_leg << std::endl;
+
+            wss << int(l_lower_arm) << "," << int(r_lower_arm) << "," << int(r_upper_arm) << "," << int(l_upper_arm) << "," << int(r_upper_leg) << "," << int(l_upper_leg) << "," << int(r_lower_leg) << "," << int(l_lower_leg);
+            m_WSTransceiver.SendData(wss.str());
 
         }
 
@@ -475,7 +465,7 @@ namespace op
             std::unique_lock<std::mutex> lock{gKeypoints3D.mutex};
 
              //***************************************** Editted by Golrokh ************************************************
-            glColor3f(1.0,0.0,0.0); // red x
+            glColor3f(1.0,0.0,0.0); // red x 
             glBegin(GL_LINES);
             // x aix
         
@@ -494,7 +484,7 @@ namespace op
         
         
             // y 
-            glColor3f(0.0,1.0,0.0); // green y
+            glColor3f(0.0,1.0,0.0); // green y //vertical
             glBegin(GL_LINES);
             glVertex3f(0.0, -400.0f, 0.0f);
             glVertex3f(0.0, 400.0f, 0.0f);
